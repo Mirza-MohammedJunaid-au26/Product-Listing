@@ -3,16 +3,20 @@ const listProductBbutton = document.querySelector('#list-product-button')
 const listContainer = document.querySelector('#list-container')
 const formContainer = document.querySelector('#form-container')
 const productForm = document.querySelector('#productForm')
-const cart = [
+var cart = [
     
 ]
-const products = [
-    {id:1, name : "Nature", description:"Nature is Beautiful", imageUrl : "https://images.unsplash.com/photo-1631539514000-484f0ba77c05?ixid=MnwxMjA3fDB8MHxlZGl0b3JpYWwtZmVlZHwzfHx8ZW58MHx8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"},
 
-    {id:2, name : "Nature", description:"Nature is Beautiful", imageUrl : "https://images.unsplash.com/photo-1631539514000-484f0ba77c05?ixid=MnwxMjA3fDB8MHxlZGl0b3JpYWwtZmVlZHwzfHx8ZW58MHx8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"},
+var products = [
     
-    {id:3, name : "Nature", description:"Nature is Beautiful", imageUrl : "https://images.unsplash.com/photo-1631539514000-484f0ba77c05?ixid=MnwxMjA3fDB8MHxlZGl0b3JpYWwtZmVlZHwzfHx8ZW58MHx8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"}
 ]
+
+window.addEventListener("load",()=>{
+    products=getProductsFromLocalStorage()
+    cart = getCartFromLocalStorage()
+    renderTable();
+    updateCartItemCount()
+})
 
 addProductBbutton.addEventListener('click', () => {
     console.log("show add product div");
@@ -40,23 +44,30 @@ productForm.addEventListener("submit", (event) => {
     });
 
     const product = {
-        name, description, imageUrl
+        id:products.length+1,name, description, imageUrl
 
     }
 
     products.push(product);
     console.log(products);
-   
     productForm.reset();
+    saveProductsToLocalStorage()
+    renderTable();
 })
 
-renderTable();
+
+function updateCartItemCount(){
+    document.querySelector("#cartCount").innerHTML = cart.length;
+    saveCartToLocalStorage();
+}
+
 
 function onAddToCartClick(product , card){
     cart.push(product.id)
     card.querySelector('#addtocart').classList.add("hidden")
     card.querySelector('#removeFromCart').classList.remove("hidden")
     console.log(cart);
+    updateCartItemCount()
 }
 
 function onRemoveFromCartClick(product , card){
@@ -67,24 +78,61 @@ function onRemoveFromCartClick(product , card){
     card.querySelector('#addtocart').classList.remove("hidden")
     card.querySelector('#removeFromCart').classList.add("hidden")
     console.log(cart);
+    updateCartItemCount()
+}
+
+function isInCart(productId){
+    const index = cart.findIndex(item => item === productId)
+    return index > -1
 }
 
 function renderTable() {
     const list = document.querySelector("#list");
     list.innerHTML = "";
+    const template = document.querySelector(".template");
     products.forEach(product => {
-        const template = document.querySelector(".template");
         const card =template.cloneNode(true);
         card.style.display = "block";
         console.log(card);
         card.querySelector(".card-title").innerHTML  =product.name;
         card.querySelector(".card-text").innerHTML  =product.description;
         card.querySelector("img").src  =product.imageUrl;
-        card.querySelector('#addtocart').addEventListener('click', ()=>onAddToCartClick(product,card))
+        const removeFromCart =  card.querySelector('#removeFromCart')
+        const addToCart = card.querySelector('#addtocart')
 
-        card.querySelector('#removeFromCart').addEventListener('click', ()=>onRemoveFromCartClick(product,card))
+        addToCart
+        .addEventListener('click', ()=>onAddToCartClick(product,card))
+
+       removeFromCart.addEventListener('click', ()=>onRemoveFromCartClick(product,card))
+
+        if(isInCart(product.id)){
+            card.querySelector('#addtocart').classList.add("hidden")
+            card.querySelector('#removeFromCart').classList.remove("hidden")
+        }
+        else{
+            card.querySelector('#addtocart').classList.remove("hidden")
+            card.querySelector('#removeFromCart').classList.add("hidden")
+        }
 
         list.appendChild(card);
     })
+}
+
+function saveProductsToLocalStorage(){
+    localStorage.setItem("products", JSON.stringify(products))
+}
+
+function saveCartToLocalStorage(){
+    localStorage.setItem("cart", JSON.stringify(cart))
+}
+
+function getProductsFromLocalStorage(){
+    const products = localStorage.getItem("products");
+    return products ? JSON.parse(products) : []
+}
+
+function getCartFromLocalStorage(){
+    const cart = localStorage.getItem("cart");
+    return cart ? JSON.parse(cart) : []
 }
 
